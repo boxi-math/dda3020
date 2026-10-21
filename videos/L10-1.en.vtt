@@ -183,105 +183,237 @@ They are illustrations of learned responses, not proof that every filter has a s
 00:05:09.553 --> 00:05:17.120
 Track the dimensions at every arrow, because a mismatched channel count makes a network specification invalid.
 
-00:05:17.900 --> 00:05:26.471
+00:05:17.900 --> 00:05:22.327
+Watch one filter turn a small image into a feature map.
+
+00:05:22.327 --> 00:05:29.087
+This is a numerical teaching example, using the same input as the interactive notes.
+
+00:05:29.087 --> 00:05:33.352
+The image has 5 rows and 5 columns, with one channel.
+
+00:05:33.352 --> 00:05:36.974
+Our 3x3 filter has 9 weights, all equal to 1.
+
+00:05:36.974 --> 00:05:38.100
+The bias is 0.
+
+00:05:38.450 --> 00:05:41.594
+Place the filter over the top left 3x3 patch.
+
+00:05:41.594 --> 00:05:45.086
+The highlighted input cells belong to this window.
+
+00:05:45.086 --> 00:05:49.906
+Each input value pairs with the weight at the same relative position.
+
+00:05:49.906 --> 00:05:53.958
+We are using stride 1, no padding, and no kernel reversal,
+
+00:05:53.958 --> 00:05:57.450
+as in the cross correlation used by CNN libraries.
+
+00:05:57.800 --> 00:05:59.186
+Follow the pairs.
+
+00:05:59.186 --> 00:06:01.141
+0 times 1 contributes 0.
+
+00:06:01.141 --> 00:06:03.586
+The next 0 also contributes 0.
+
+00:06:03.586 --> 00:06:05.541
+1 times 1 contributes 1.
+
+00:06:05.541 --> 00:06:07.578
+Repeat for all 9 entries.
+
+00:06:07.578 --> 00:06:12.711
+The product tiles below record each contribution, in row order.
+
+00:06:12.711 --> 00:06:17.600
+The filter weights stay fixed while we read the input patch.
+
+00:06:17.950 --> 00:06:19.786
+Now add the 9 products.
+
+00:06:19.786 --> 00:06:22.659
+There are 4 ones, so their sum is 4.
+
+00:06:22.659 --> 00:06:24.813
+Adding our 0 bias leaves 4.
+
+00:06:24.813 --> 00:06:29.043
+This is 1 scalar output, computed from 1 whole patch.
+
+00:06:29.043 --> 00:06:34.150
+The filter does not write 9 different outputs for its 9 entries.
+
+00:06:34.500 --> 00:06:38.376
+Send that result to the top left cell of the output map.
+
+00:06:38.376 --> 00:06:42.459
+Its position records where the window started in the input.
+
+00:06:42.459 --> 00:06:43.981
+Keep this 4 on screen:
+
+00:06:43.981 --> 00:06:50.140
+later computations fill other cells rather than replacing the result we already computed.
+
+00:06:50.490 --> 00:06:53.298
+Slide the window 1 column to the right.
+
+00:06:53.298 --> 00:06:57.546
+The input patch changes, but every filter weight remains 1.
+
+00:06:57.546 --> 00:07:00.282
+Compute the new products and add them.
+
+00:07:00.282 --> 00:07:04.170
+This patch contains 5 ones, so the second output is 5.
+
+00:07:04.170 --> 00:07:08.490
+Moving the window did not create any new learned parameters.
+
+00:07:08.840 --> 00:07:11.990
+Before we move again, predict the next output.
+
+00:07:11.990 --> 00:07:14.729
+Look at the third window in the top row.
+
+00:07:14.729 --> 00:07:16.783
+How many ones does it contain?
+
+00:07:16.783 --> 00:07:20.960
+Pause here and calculate the sum before revealing the answer.
+
+00:07:21.510 --> 00:07:22.612
+The answer is 4.
+
+00:07:22.612 --> 00:07:25.916
+Fill the remaining valid positions in row order.
+
+00:07:25.916 --> 00:07:30.529
+At the end of a row, the window returns to the left and moves down.
+
+00:07:30.529 --> 00:07:35.830
+Every new output comes from the same 9 weights, applied to a different patch.
+
+00:07:36.180 --> 00:07:41.140
+There are 3 valid starts along each axis, giving a 3x3 feature map.
+
+00:07:41.140 --> 00:07:46.173
+Moving 1 more column would put part of the filter outside the image,
+
+00:07:46.173 --> 00:07:48.320
+so that position is excluded.
+
+00:07:48.320 --> 00:07:51.281
+9 weights and 1 bias produced 9 outputs.
+
+00:07:51.281 --> 00:07:55.500
+Parameter count and output size are different quantities.
+
+00:07:56.300 --> 00:08:04.871
 A convolutional filter spans a small spatial window and, for the ordinary dense convolution considered here, all input channels.
 
-00:05:26.471 --> 00:05:34.036
+00:08:04.871 --> 00:08:12.436
 At one position, multiply each patch value by its corresponding filter weight, add the products and add one bias.
 
-00:05:34.036 --> 00:05:35.710
+00:08:12.436 --> 00:08:14.110
 The result is one number.
 
-00:05:35.710 --> 00:05:41.669
+00:08:14.110 --> 00:08:20.069
 A 5 by 5 filter on a three-channel image therefore performs a 75-dimensional dot product.
 
-00:05:41.669 --> 00:05:48.900
+00:08:20.069 --> 00:08:27.300
 It does not produce a separate output number for each input channel; those channel contributions are summed.
 
-00:05:49.250 --> 00:05:55.679
+00:08:27.650 --> 00:08:34.079
 Move the filter to the next position and repeat the same calculation with the same learned numbers.
 
-00:05:55.679 --> 00:06:01.069
+00:08:34.079 --> 00:08:39.469
 The input patch changes, but the filter does not gain new parameters when it moves.
 
-00:06:01.069 --> 00:06:03.277
+00:08:39.469 --> 00:08:41.677
 This is spatial parameter sharing.
 
-00:06:03.277 --> 00:06:09.122
+00:08:41.677 --> 00:08:47.522
 The progressive diagrams in the lecture trace several outputs becoming one activation map.
 
-00:06:09.122 --> 00:06:14.642
+00:08:47.522 --> 00:08:53.042
 CNN libraries normally implement cross-correlation, where the kernel is not reversed.
 
-00:06:14.642 --> 00:06:21.850
+00:08:53.042 --> 00:09:00.250
 We retain the conventional name convolution while being explicit about the operation in our executable example.
 
-00:06:22.200 --> 00:06:27.319
+00:09:00.600 --> 00:09:05.719
 A second filter has its own weights and produces another activation map.
 
-00:06:27.319 --> 00:06:31.158
+00:09:05.719 --> 00:09:09.558
 Stack all the maps along the output channel dimension.
 
-00:06:31.158 --> 00:06:35.139
+00:09:09.558 --> 00:09:13.539
 Six filters produce six channels; 10 filters produce 10.
 
-00:06:35.139 --> 00:06:43.031
+00:09:13.539 --> 00:09:21.431
 A conventional filter's channel depth equals the current input depth, not the number of filters we have chosen.
 
-00:06:43.031 --> 00:06:51.918
+00:09:21.431 --> 00:09:30.318
 Depthwise and grouped convolutions are useful exceptions with different connectivity, beyond the basic layer in these slides.
 
-00:06:51.918 --> 00:06:59.240
+00:09:30.318 --> 00:09:37.640
 The general principle remains that output shape and learned-parameter count answer different questions.
 
-00:07:00.034 --> 00:07:07.796
+00:09:38.434 --> 00:09:46.196
 Pause and predict the output channel count for an RGB input processed by six ordinary convolutional filters.
 
-00:07:07.796 --> 00:07:09.018
+00:09:46.196 --> 00:09:47.418
 Is it 3, 6 or 18?
 
-00:07:09.018 --> 00:07:13.834
+00:09:47.418 --> 00:09:52.234
 Explain exactly where the input-channel contributions are combined.
 
-00:07:13.834 --> 00:07:21.166
+00:09:52.234 --> 00:09:59.566
 Then consider the next layer: if it uses 10 filters, what input depth must each of those filters span?
 
-00:07:21.166 --> 00:07:28.354
+00:09:59.566 --> 00:10:06.754
 Use the volume diagram rather than multiplying every number you see in the architecture description.
 
-00:07:28.904 --> 00:07:30.909
+00:10:07.304 --> 00:10:09.309
 The first output depth is six.
 
-00:07:30.909 --> 00:07:38.061
+00:10:09.309 --> 00:10:16.461
 Each filter sums across its three input channels at a spatial location and produces one output value there.
 
-00:07:38.061 --> 00:07:40.668
+00:10:16.461 --> 00:10:19.068
 Six filters therefore produce six maps.
 
-00:07:40.668 --> 00:07:46.550
+00:10:19.068 --> 00:10:24.950
 The next layer's filters must each span the six channels arriving from that first layer.
 
-00:07:46.550 --> 00:07:49.224
+00:10:24.950 --> 00:10:27.624
 10 such filters produce 10 new channels.
 
-00:07:49.224 --> 00:07:59.384
+00:10:27.624 --> 00:10:37.784
 Your exercise is to label every filter's full three-dimensional shape in the two-layer preview, including the channel depth as well as its spatial size.
 
-00:07:59.734 --> 00:08:01.897
+00:10:38.134 --> 00:10:40.297
 Three ideas summarize this part.
 
-00:08:01.897 --> 00:08:06.561
+00:10:40.297 --> 00:10:44.961
 Convolution applies local dot products to preserve spatial structure.
 
-00:08:06.561 --> 00:08:09.941
+00:10:44.961 --> 00:10:48.341
 One filter reuses its parameters across locations.
 
-00:08:09.941 --> 00:08:13.794
+00:10:48.341 --> 00:10:52.194
 A bank of filters produces a bank of output feature maps.
 
-00:08:13.794 --> 00:08:18.999
+00:10:52.194 --> 00:10:57.399
 The application gallery showed why the final output also depends on the task.
 
-00:08:18.999 --> 00:08:28.734
+00:10:57.399 --> 00:11:07.134
 Next, we derive the spatial formula, investigate strides and padding, and reproduce the lecture's example with exactly 760 trainable parameters.
 

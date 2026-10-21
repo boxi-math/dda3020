@@ -225,43 +225,43 @@ In the lab, inspect how probability and cross-entropy change,
 00:06:21.864 --> 00:06:27.114
 and compare the greedy predicted string with the individual step distributions.
 
-00:06:27.901 --> 00:06:29.162
+00:06:27.900 --> 00:06:29.161
 Pause and predict.
 
-00:06:29.162 --> 00:06:34.136
+00:06:29.161 --> 00:06:34.136
 Our training word has two consecutive inputs containing the letter 'l'.
 
-00:06:34.136 --> 00:06:42.404
+00:06:34.136 --> 00:06:42.403
 If the input vector is the same at those positions, must the predicted next-character distributions also be identical?
 
-00:06:42.404 --> 00:06:47.098
+00:06:42.403 --> 00:06:47.098
 Draw the previous hidden state entering each cell before answering.
 
-00:06:47.098 --> 00:06:53.334
+00:06:47.098 --> 00:06:53.333
 Then consider an implementation that resets the hidden state to 0 before every character.
 
-00:06:53.334 --> 00:07:01.181
+00:06:53.333 --> 00:07:01.180
 What contextual information would be lost, and which training transitions would become difficult to distinguish?
 
-00:07:01.731 --> 00:07:09.737
+00:07:01.730 --> 00:07:09.737
 The distributions need not be identical because each state combines the current character with a different prefix state.
 
-00:07:09.737 --> 00:07:13.474
+00:07:09.737 --> 00:07:13.473
 Resetting state at every character removes that context;
 
-00:07:13.474 --> 00:07:21.814
+00:07:13.473 --> 00:07:21.813
 a predictor based only on the current letter 'l' cannot distinguish the two desired following letters solely from that input.
 
-00:07:21.814 --> 00:07:24.616
+00:07:21.813 --> 00:07:24.616
 It may instead learn a mixed distribution.
 
-00:07:24.616 --> 00:07:34.491
+00:07:24.616 --> 00:07:34.490
 The exercise is to compare these two models on the tiny training sequence, without interpreting training-set memorization as language understanding.
 
-00:07:34.841 --> 00:07:35.826
+00:07:34.840 --> 00:07:35.825
 Keep 3 lessons.
 
-00:07:35.826 --> 00:07:39.766
+00:07:35.825 --> 00:07:39.766
 Specify the input and output structure of the sequence task.
 
 00:07:39.766 --> 00:07:44.955
@@ -279,6 +279,6 @@ Next we differentiate the unrolled graph
 00:07:54.609 --> 00:07:58.944
 and examine why long sequences cause memory and gradient problems.
 
-00:07:58.944 --> 00:08:04.921
+00:07:58.944 --> 00:08:04.920
 We will then derive the LSTM and GRU mechanisms that the optional lecture slides introduce.
 

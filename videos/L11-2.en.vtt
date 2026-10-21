@@ -210,48 +210,48 @@ Greater depth does not guarantee improvement, and example depth counts in an old
 00:06:54.507 --> 00:06:59.173
 Evaluate the task, data, optimization and computational cost together.
 
-00:06:59.966 --> 00:07:05.935
+00:06:59.967 --> 00:07:05.936
 Pause and predict an idealized LSTM component with forget gate 1 and input gate 0.
 
-00:07:05.935 --> 00:07:07.901
+00:07:05.936 --> 00:07:07.901
 What is its new cell state?
 
 00:07:07.901 --> 00:07:11.104
 Must the hidden state equal that cell state?
 
-00:07:11.104 --> 00:07:19.329
+00:07:11.104 --> 00:07:19.330
 Then explain whether a forget gate near 1 guarantees that every gradient in a full recurrent model remains large.
 
-00:07:19.329 --> 00:07:27.846
+00:07:19.330 --> 00:07:27.847
 Distinguish the direct additive cell path from all the other dependencies in the computation graph before you answer.
 
-00:07:28.396 --> 00:07:35.106
+00:07:28.397 --> 00:07:35.107
 The new cell equals the old cell because it is entirely retained and no candidate content is written.
 
-00:07:35.106 --> 00:07:41.351
+00:07:35.107 --> 00:07:41.351
 The hidden state still applies tanh and an output gate, so it generally differs from the cell.
 
-00:07:41.351 --> 00:07:49.655
+00:07:41.351 --> 00:07:49.656
 Gates near 1 can improve a particular route for information and gradients, but do not guarantee healthy gradients everywhere.
 
-00:07:49.655 --> 00:07:58.956
+00:07:49.656 --> 00:07:58.957
 Your exercise is to compute both states for several slider settings, then derive how the cell changes when only its input gate is perturbed.
 
-00:07:59.306 --> 00:08:01.809
+00:07:59.307 --> 00:08:01.810
 Three conclusions connect this part.
 
-00:08:01.809 --> 00:08:06.190
+00:08:01.810 --> 00:08:06.190
 BPTT accumulates gradients through shared parameters over time.
 
-00:08:06.190 --> 00:08:13.003
+00:08:06.190 --> 00:08:13.004
 Gradient clipping and gated paths address different failure mechanisms and should not be confused.
 
-00:08:13.003 --> 00:08:19.747
+00:08:13.004 --> 00:08:19.748
 LSTM and GRU gates control information flow, while stacked models add a separate depth dimension.
 
-00:08:19.747 --> 00:08:27.604
+00:08:19.748 --> 00:08:27.604
 Next, attention will compare sequence positions directly rather than relying only on one recurrent state pathway.
 
-00:08:27.604 --> 00:08:34.626
+00:08:27.604 --> 00:08:34.627
 We will calculate its weights, apply causal masking and place it inside a complete Transformer block.
 
