@@ -1,0 +1,287 @@
+WEBVTT
+
+00:00:00.300 --> 00:00:01.896
+Welcome to Lecture 10.
+
+00:00:01.896 --> 00:00:09.080
+Last lecture, a dense network learned features by connecting all input coordinates to hidden units.
+
+00:00:09.080 --> 00:00:13.217
+For a 32 by 32 color image, that means 3072 input values.
+
+00:00:13.217 --> 00:00:19.022
+Convolution keeps the image's spatial arrangement and uses small shared filters.
+
+00:00:19.022 --> 00:00:31.140
+Our goal is to understand what those filters compute, how the output dimensions are determined, and how convolution, activation, pooling and dense layers fit together.
+
+00:00:31.490 --> 00:00:36.125
+The lecture's history begins with adaptive linear models around 1960
+
+00:00:36.125 --> 00:00:39.942
+and the later popularization of backpropagation in 1986.
+
+00:00:39.942 --> 00:00:46.077
+The early convolutional document-recognition network demonstrated gradient-based learning,
+
+00:00:46.077 --> 00:00:48.190
+with the influential 1998 paper
+
+00:00:48.190 --> 00:00:52.962
+connecting convolutional feature maps and subsampling to a classifier.
+
+00:00:52.962 --> 00:00:57.869
+These historical examples show that convolution is an architectural idea
+
+00:00:57.869 --> 00:00:59.505
+with a long development,
+
+00:00:59.505 --> 00:01:04.686
+rather than a technique that appeared suddenly with today's language models.
+
+00:01:04.686 --> 00:01:09.730
+The dates identify the slide's milestones, not exclusive invention claims.
+
+00:01:10.080 --> 00:01:20.655
+The 2006 deep-learning revival and AlexNet's 2012 ImageNet result helped demonstrate the potential of learned hierarchical representations at larger scale.
+
+00:01:20.655 --> 00:01:26.317
+Data, computational resources and training methods mattered alongside architecture.
+
+00:01:26.317 --> 00:01:31.229
+Do not infer that every deeper network automatically generalizes better.
+
+00:01:31.229 --> 00:01:34.435
+Instead, ask what structure the model exploits.
+
+00:01:34.435 --> 00:01:42.008
+Images have local patterns that recur at many positions, making locality and shared weights useful assumptions.
+
+00:01:42.008 --> 00:01:48.080
+This is the thread connecting the historical examples to the calculation we will perform.
+
+00:01:48.867 --> 00:01:53.373
+The application gallery begins with classification and retrieval.
+
+00:01:53.373 --> 00:01:57.394
+Classification might identify the main object in an image.
+
+00:01:57.394 --> 00:02:02.385
+Retrieval maps an image to a representation used to find related images.
+
+00:02:02.385 --> 00:02:05.088
+These are related but distinct outputs.
+
+00:02:05.088 --> 00:02:08.970
+Detection must locate objects and assign labels to them.
+
+00:02:08.970 --> 00:02:12.714
+Segmentation produces a label at each pixel or region.
+
+00:02:12.714 --> 00:02:22.627
+A backbone that extracts features can support several tasks, but the final prediction head and training loss must match what the task requires.
+
+00:02:22.977 --> 00:02:26.972
+The next examples include driving scenes, video processing
+
+00:02:26.972 --> 00:02:29.726
+and estimation of human joint locations.
+
+00:02:29.726 --> 00:02:34.134
+Video brings a time dimension in addition to spatial dimensions.
+
+00:02:34.134 --> 00:02:38.129
+A pose system predicts structured locations such as joints
+
+00:02:38.129 --> 00:02:40.539
+rather than only a single category.
+
+00:02:40.539 --> 00:02:43.638
+The hardware picture in the historical slides
+
+00:02:43.638 --> 00:02:47.358
+illustrates the importance of accelerated computation;
+
+00:02:47.358 --> 00:02:51.283
+specific product names are examples from those materials.
+
+00:02:51.283 --> 00:02:56.449
+We do not need that exact hardware to understand the mathematical operation
+
+00:02:56.449 --> 00:02:58.377
+or reproduce a tiny example.
+
+00:02:58.727 --> 00:03:05.606
+The gallery also includes medical and scientific imagery, traffic signs, galaxies, whales and aerial images.
+
+00:03:05.606 --> 00:03:12.550
+Image captioning turns an image representation into a sequence of words, connecting this lecture to the next.
+
+00:03:12.550 --> 00:03:19.748
+Its illustrated captions include mistakes, reminding us that plausible predictions can still misdescribe a scene.
+
+00:03:19.748 --> 00:03:24.398
+Visualization and synthesis examples show other uses of learned features.
+
+00:03:24.398 --> 00:03:35.927
+Across all these applications, distinguish the shared feature extractor from the task-specific output, and evaluate predictions against the actual task rather than appearance alone.
+
+00:03:36.700 --> 00:03:43.925
+The preview diagrams describe a convolutional network as a sequence of three-dimensional activation volumes.
+
+00:03:43.925 --> 00:03:49.344
+Width and height describe spatial positions; the third dimension counts channels.
+
+00:03:49.344 --> 00:03:52.622
+For an RGB image, there are three input channels.
+
+00:03:52.622 --> 00:03:58.242
+Later channels are learned feature maps and do not necessarily correspond to colors.
+
+00:03:58.242 --> 00:04:01.788
+Convolution changes the volume using learned filters.
+
+00:04:01.788 --> 00:04:06.805
+An elementwise ReLU changes values but leaves the tensor's shape unchanged.
+
+00:04:06.805 --> 00:04:11.220
+Pooling can reduce spatial dimensions without mixing the channels.
+
+00:04:11.570 --> 00:04:14.082
+Follow the first preview example.
+
+00:04:14.082 --> 00:04:17.736
+Start with a 32 by 32 image with three channels.
+
+00:04:17.736 --> 00:04:27.784
+Six filters, each 5 by 5 across all three input channels, with stride 1 and no padding, produce a 28 by 28 output with six channels.
+
+00:04:27.784 --> 00:04:31.362
+Each filter contributes one channel, not three.
+
+00:04:31.362 --> 00:04:35.625
+A second layer must therefore accept six input channels.
+
+00:04:35.625 --> 00:04:41.410
+Its filters have a different depth even if their spatial width remains five.
+
+00:04:41.760 --> 00:04:46.369
+10 filters in that second layer produce 24 by 24 by 10 activations.
+
+00:04:46.369 --> 00:04:51.116
+You can see the spatial shrinking before we derive a general formula.
+
+00:04:51.116 --> 00:04:55.863
+Stacking such layers grows the receptive field in the original image.
+
+00:04:55.863 --> 00:05:01.711
+The feature-map visualizations in the slides relate one filter to one activation map.
+
+00:05:01.711 --> 00:05:09.553
+They are illustrations of learned responses, not proof that every filter has a single human-interpretable meaning.
+
+00:05:09.553 --> 00:05:17.120
+Track the dimensions at every arrow, because a mismatched channel count makes a network specification invalid.
+
+00:05:17.900 --> 00:05:26.471
+A convolutional filter spans a small spatial window and, for the ordinary dense convolution considered here, all input channels.
+
+00:05:26.471 --> 00:05:34.036
+At one position, multiply each patch value by its corresponding filter weight, add the products and add one bias.
+
+00:05:34.036 --> 00:05:35.710
+The result is one number.
+
+00:05:35.710 --> 00:05:41.669
+A 5 by 5 filter on a three-channel image therefore performs a 75-dimensional dot product.
+
+00:05:41.669 --> 00:05:48.900
+It does not produce a separate output number for each input channel; those channel contributions are summed.
+
+00:05:49.250 --> 00:05:55.679
+Move the filter to the next position and repeat the same calculation with the same learned numbers.
+
+00:05:55.679 --> 00:06:01.069
+The input patch changes, but the filter does not gain new parameters when it moves.
+
+00:06:01.069 --> 00:06:03.277
+This is spatial parameter sharing.
+
+00:06:03.277 --> 00:06:09.122
+The progressive diagrams in the lecture trace several outputs becoming one activation map.
+
+00:06:09.122 --> 00:06:14.642
+CNN libraries normally implement cross-correlation, where the kernel is not reversed.
+
+00:06:14.642 --> 00:06:21.850
+We retain the conventional name convolution while being explicit about the operation in our executable example.
+
+00:06:22.200 --> 00:06:27.319
+A second filter has its own weights and produces another activation map.
+
+00:06:27.319 --> 00:06:31.158
+Stack all the maps along the output channel dimension.
+
+00:06:31.158 --> 00:06:35.139
+Six filters produce six channels; 10 filters produce 10.
+
+00:06:35.139 --> 00:06:43.031
+A conventional filter's channel depth equals the current input depth, not the number of filters we have chosen.
+
+00:06:43.031 --> 00:06:51.918
+Depthwise and grouped convolutions are useful exceptions with different connectivity, beyond the basic layer in these slides.
+
+00:06:51.918 --> 00:06:59.240
+The general principle remains that output shape and learned-parameter count answer different questions.
+
+00:07:00.034 --> 00:07:07.796
+Pause and predict the output channel count for an RGB input processed by six ordinary convolutional filters.
+
+00:07:07.796 --> 00:07:09.018
+Is it 3, 6 or 18?
+
+00:07:09.018 --> 00:07:13.834
+Explain exactly where the input-channel contributions are combined.
+
+00:07:13.834 --> 00:07:21.166
+Then consider the next layer: if it uses 10 filters, what input depth must each of those filters span?
+
+00:07:21.166 --> 00:07:28.354
+Use the volume diagram rather than multiplying every number you see in the architecture description.
+
+00:07:28.904 --> 00:07:30.909
+The first output depth is six.
+
+00:07:30.909 --> 00:07:38.061
+Each filter sums across its three input channels at a spatial location and produces one output value there.
+
+00:07:38.061 --> 00:07:40.668
+Six filters therefore produce six maps.
+
+00:07:40.668 --> 00:07:46.550
+The next layer's filters must each span the six channels arriving from that first layer.
+
+00:07:46.550 --> 00:07:49.224
+10 such filters produce 10 new channels.
+
+00:07:49.224 --> 00:07:59.384
+Your exercise is to label every filter's full three-dimensional shape in the two-layer preview, including the channel depth as well as its spatial size.
+
+00:07:59.734 --> 00:08:01.897
+Three ideas summarize this part.
+
+00:08:01.897 --> 00:08:06.561
+Convolution applies local dot products to preserve spatial structure.
+
+00:08:06.561 --> 00:08:09.941
+One filter reuses its parameters across locations.
+
+00:08:09.941 --> 00:08:13.794
+A bank of filters produces a bank of output feature maps.
+
+00:08:13.794 --> 00:08:18.999
+The application gallery showed why the final output also depends on the task.
+
+00:08:18.999 --> 00:08:28.734
+Next, we derive the spatial formula, investigate strides and padding, and reproduce the lecture's example with exactly 760 trainable parameters.
+

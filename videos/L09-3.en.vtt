@@ -1,0 +1,254 @@
+WEBVTT
+
+00:00:00.300 --> 00:00:05.363
+Let us calculate an entire small network rather than only a scalar neuron.
+
+00:00:05.363 --> 00:00:10.221
+This is a new worked example illustrating the slide's multilayer rules.
+
+00:00:10.221 --> 00:00:11.452
+The input is 1, 2.
+
+00:00:11.452 --> 00:00:15.899
+The first weight matrix is the 2 by 2 identity, with zero biases.
+
+00:00:15.899 --> 00:00:21.099
+Both preactivations are positive, so ReLU passes through the values 1 and 2.
+
+00:00:21.099 --> 00:00:28.420
+The hidden vector therefore equals the input here, but it still results from an explicit layer computation.
+
+00:00:28.770 --> 00:00:34.957
+The output weights are 1 and -1, with zero output bias and a linear output.
+
+00:00:34.957 --> 00:00:37.845
+The prediction is 1 minus 2, or -1.
+
+00:00:37.845 --> 00:00:42.218
+The target is 1, so the half squared-error loss is 2.
+
+00:00:42.218 --> 00:00:45.518
+The loss derivative at the output is -2.
+
+00:00:45.518 --> 00:00:51.952
+Multiplying this by the hidden vector gives output weight gradients -2 and -4.
+
+00:00:51.952 --> 00:00:54.510
+The output bias gradient is -2.
+
+00:00:54.510 --> 00:01:01.770
+Carefully distinguish this linear output from the sigmoid example in the preceding part.
+
+00:01:02.120 --> 00:01:09.227
+Propagate the output sensitivity through the output weights to get hidden sensitivities -2 and +2.
+
+00:01:09.227 --> 00:01:14.375
+Both ReLU derivatives are 1, because their preactivations are positive.
+
+00:01:14.375 --> 00:01:21.337
+Take the outer product with the input to obtain the first-layer gradient rows -2, -4 and +2, +4.
+
+00:01:21.337 --> 00:01:24.600
+The first-layer bias gradients are -2 and +2.
+
+00:01:24.600 --> 00:01:29.096
+Every displayed number can be checked with finite differences.
+
+00:01:29.096 --> 00:01:34.680
+The exercise code on the site performs those checks and a small training run.
+
+00:01:35.467 --> 00:01:39.829
+The lecture compares the cost of forward and backward passes.
+
+00:01:39.829 --> 00:01:48.123
+Multiplying an output-width by input-width matrix by a vector uses work proportional to the product of those widths.
+
+00:01:48.123 --> 00:01:53.986
+For a hidden layer with m outputs and d inputs, this is proportional to m times d.
+
+00:01:53.986 --> 00:02:00.493
+Bias additions and elementwise activations usually cost less than the dense multiplication.
+
+00:02:00.493 --> 00:02:02.995
+The output layer adds its own cost.
+
+00:02:02.995 --> 00:02:08.787
+Count the actual dimensions before reducing an expression to a single big O term.
+
+00:02:09.137 --> 00:02:18.918
+Backward propagation needs a transposed matrix multiplication to pass gradients toward the inputs and an outer product to form weight gradients.
+
+00:02:18.918 --> 00:02:23.468
+These have the same asymptotic order as the forward multiplication.
+
+00:02:23.468 --> 00:02:31.823
+The slide's statement that backward work is roughly twice forward work is a useful rough model, not a universal timing law.
+
+00:02:31.823 --> 00:02:37.257
+Implementation, batching, activation functions and hardware affect the constant.
+
+00:02:37.257 --> 00:02:43.777
+Training must also retain intermediate activations or pay extra computation to reconstruct them.
+
+00:02:44.127 --> 00:02:53.109
+For many square dense hidden layers of width H, multiplying H by H gives a quadratic dependence on width, repeated across the depth.
+
+00:02:53.109 --> 00:02:57.464
+This explains why widening a dense network can become expensive.
+
+00:02:57.464 --> 00:03:02.432
+It does not imply every neural network's cost is the square of one width.
+
+00:03:02.432 --> 00:03:07.739
+Convolutions and other structured operators have different dimension formulas.
+
+00:03:07.739 --> 00:03:14.680
+When estimating memory, separate parameter storage, activation storage, gradients and optimizer state.
+
+00:03:14.680 --> 00:03:18.967
+Parameter count alone does not determine total training memory.
+
+00:03:19.767 --> 00:03:25.225
+A deep sequence of linear transformations collapses into their matrix product.
+
+00:03:25.225 --> 00:03:29.004
+Including biases still gives an affine transformation.
+
+00:03:29.004 --> 00:03:36.422
+Therefore stacking layers without nonlinearities does not by itself expand the represented function class.
+
+00:03:36.422 --> 00:03:40.131
+Add nonlinear activations and the conclusion changes.
+
+00:03:40.131 --> 00:03:46.779
+A composition of piecewise-linear ReLU functions can create many regions with different slopes.
+
+00:03:46.779 --> 00:03:55.807
+The network can build progressively useful intermediate features rather than just multiply all its weights into one fixed matrix.
+
+00:03:56.157 --> 00:04:08.486
+Universal approximation results say that, under suitable assumptions, a sufficiently wide nonlinear network can approximate a continuous target function on a compact domain arbitrarily well.
+
+00:04:08.486 --> 00:04:10.497
+This is an existence statement.
+
+00:04:10.497 --> 00:04:18.284
+It does not tell us how wide the network must be, how to find its parameters, or how many training examples it requires.
+
+00:04:18.284 --> 00:04:23.800
+The broad phrase 'any function' on the slide needs these mathematical qualifications.
+
+00:04:23.800 --> 00:04:28.277
+Approximation ability is not equivalent to an optimization guarantee.
+
+00:04:28.627 --> 00:04:29.892
+Why then use depth?
+
+00:04:29.892 --> 00:04:39.482
+Some functions have efficient compositional representations, whereas a shallow network may require many more units for comparable approximation.
+
+00:04:39.482 --> 00:04:43.877
+The lecture also illustrates empirical generalization comparisons.
+
+00:04:43.877 --> 00:04:49.671
+These are motivation, not a theorem that adding depth always improves test performance.
+
+00:04:49.671 --> 00:04:53.867
+Data, regularization, architecture and optimization all matter.
+
+00:04:53.867 --> 00:05:05.987
+Diagnose training error separately from validation error: the first reflects fit to the observed examples, while the second provides evidence about predictions beyond those examples.
+
+00:05:06.767 --> 00:05:10.817
+A large image reveals the limitation of fully connected layers.
+
+00:05:10.817 --> 00:05:15.510
+Even a modest hidden width must connect to every input pixel and channel.
+
+00:05:15.510 --> 00:05:23.739
+Flattening also discards the explicit arrangement of neighboring pixels, although that structure matters for edges and textures.
+
+00:05:23.739 --> 00:05:30.361
+The lecture introduces two ideas to reduce this burden: sparse local connections and shared parameters.
+
+00:05:30.361 --> 00:05:38.847
+These are architectural choices that encode useful assumptions about images, rather than universal rules for every learning problem.
+
+00:05:39.197 --> 00:05:45.125
+With local connectivity, one output depends only on a neighborhood of the previous layer.
+
+00:05:45.125 --> 00:05:48.522
+That neighborhood is its immediate receptive field.
+
+00:05:48.522 --> 00:05:54.584
+Multiple layers enlarge the region of the original input that can influence a later output.
+
+00:05:54.584 --> 00:06:02.644
+For two stride-one filters of width 3, the interior receptive field has width 5, not 6, because adjacent windows overlap.
+
+00:06:02.644 --> 00:06:10.837
+Strides and pooling change the spacing between features, so we must track that spacing as well as the receptive-field size.
+
+00:06:11.187 --> 00:06:15.442
+Parameter sharing reuses the same local weights at different positions.
+
+00:06:15.442 --> 00:06:22.872
+The lecture's one-dimensional sketch contrasts three shared filter weights with a larger fully connected connection pattern.
+
+00:06:22.872 --> 00:06:27.846
+In two-dimensional images, the corresponding kernel slides across width and height.
+
+00:06:27.846 --> 00:06:32.580
+Reusing a detector says that a useful pattern can occur at different positions.
+
+00:06:32.580 --> 00:06:37.135
+It does not mean different filters share all their weights with one another.
+
+00:06:37.135 --> 00:06:43.427
+In the next lecture we will count their activations, learned parameters and spatial dimensions carefully.
+
+00:06:44.200 --> 00:06:46.349
+Pause for the final prediction.
+
+00:06:46.349 --> 00:06:54.041
+Suppose we make our XOR network much deeper and wider, but replace every activation with the identity function.
+
+00:06:54.041 --> 00:07:00.070
+Could enough parameters eventually solve XOR exactly with one affine decision boundary?
+
+00:07:00.070 --> 00:07:08.594
+Next, explain why a network with enough representational capacity might still fail to learn from a particular training set.
+
+00:07:08.594 --> 00:07:16.840
+Your answer should identify at least two distinct causes rather than simply saying the model is not intelligent enough.
+
+00:07:17.390 --> 00:07:26.917
+The identity-activation network still collapses to an affine map, so extra layers and coefficients do not remove the XOR limitation.
+
+00:07:26.917 --> 00:07:39.907
+A capable nonlinear model can still fail because optimization does not find a useful solution, because data are insufficient or unrepresentative, or because generalization is poor.
+
+00:07:39.907 --> 00:07:51.310
+For practice, run the two-layer example, verify every gradient with finite differences, and then train on all four XOR points using smooth hidden activations.
+
+00:07:51.310 --> 00:07:54.990
+Compare training loss with classification accuracy.
+
+00:07:55.340 --> 00:07:58.198
+The lecture has three connected lessons.
+
+00:07:58.198 --> 00:08:05.485
+Neural networks learn representations by composing weighted transformations and nonlinear activations.
+
+00:08:05.485 --> 00:08:13.558
+Backpropagation computes gradients through that composition using local rules and accumulated path contributions.
+
+00:08:13.558 --> 00:08:19.131
+Architectural structure controls expressive efficiency and computational cost.
+
+00:08:19.131 --> 00:08:25.132
+The site includes the complete derivations, numerical checks, exercises and answers.
+
+00:08:25.132 --> 00:08:36.420
+Next comes convolution: we will preserve spatial structure, reuse a filter, and calculate exactly how an image changes shape through a complete small network.
+

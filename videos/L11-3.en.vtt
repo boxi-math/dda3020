@@ -1,0 +1,368 @@
+WEBVTT
+
+00:00:00.300 --> 00:00:07.641
+The Transformer introduced in the lecture replaces recurrent state propagation with attention-based interactions.
+
+00:00:07.641 --> 00:00:14.202
+Begin with a vector representation for each token and add or otherwise supply positional information.
+
+00:00:14.202 --> 00:00:19.463
+Attention without position information does not by itself distinguish word order.
+
+00:00:19.463 --> 00:00:22.971
+The original model uses sinusoidal position encodings;
+
+00:00:22.971 --> 00:00:27.064
+learned position embeddings and other schemes are alternatives.
+
+00:00:27.064 --> 00:00:33.300
+These choices are part of the architecture, not automatically provided by the attention formula.
+
+00:00:33.650 --> 00:00:37.489
+Follow the lecture's French-to-English translation example.
+
+00:00:37.489 --> 00:00:43.281
+The encoder processes the source sequence with self-attention and a feedforward sublayer,
+
+00:00:43.281 --> 00:00:47.576
+using residual connections and normalization around the sublayers.
+
+00:00:47.576 --> 00:00:52.196
+The decoder has causal self-attention over its available target prefix,
+
+00:00:52.196 --> 00:00:57.077
+cross-attention to the encoder outputs, and its own feedforward processing.
+
+00:00:57.077 --> 00:01:01.046
+During training, shifted known target tokens supply prefixes.
+
+00:01:01.046 --> 00:01:06.057
+Masking prevents a target position from seeing the answer at later positions,
+
+00:01:06.057 --> 00:01:08.530
+which would leak training information.
+
+00:01:08.880 --> 00:01:13.717
+A Transformer is therefore more than a query-key similarity equation.
+
+00:01:13.717 --> 00:01:18.484
+Residual connections preserve an additional route through the block;
+
+00:01:18.484 --> 00:01:21.638
+normalization controls activation statistics;
+
+00:01:21.638 --> 00:01:27.527
+the feedforward network applies a learned nonlinear transformation at each position.
+
+00:01:27.527 --> 00:01:32.083
+Original post-normalization and common pre-normalization variants
+
+00:01:32.083 --> 00:01:34.677
+arrange these components differently.
+
+00:01:34.677 --> 00:01:40.565
+Encoder-only and decoder-only families use different subsets of the original design.
+
+00:01:40.565 --> 00:01:45.192
+Computing many training positions at once does not remove the need
+
+00:01:45.192 --> 00:01:51.080
+to generate later autoregressive output tokens after their earlier sampled prefixes.
+
+00:01:51.867 --> 00:01:55.080
+Queries ask what information a position seeks.
+
+00:01:55.080 --> 00:01:59.829
+Keys describe how candidate source positions can match that request.
+
+00:01:59.829 --> 00:02:02.692
+Values supply the content to be combined.
+
+00:02:02.692 --> 00:02:08.698
+In self-attention, all three projections derive from the same sequence representation.
+
+00:02:08.698 --> 00:02:14.355
+Multiply queries by the transpose of keys to get a score for each query-key pair,
+
+00:02:14.355 --> 00:02:17.638
+and divide by the square root of key dimension.
+
+00:02:17.638 --> 00:02:22.387
+Apply softmax across the allowed keys separately for each query row.
+
+00:02:22.737 --> 00:02:24.820
+Work through one row.
+
+00:02:24.820 --> 00:02:26.605
+The query is 1, 0.
+
+00:02:26.605 --> 00:02:29.680
+The two keys are 1, 0 and 0, 1.
+
+00:02:29.680 --> 00:02:32.755
+Their dot products are 1 and 0.
+
+00:02:32.755 --> 00:02:39.699
+Key dimension is 2, so scaled scores are approximately 0.707107 and 0.
+
+00:02:39.699 --> 00:02:44.658
+Softmax gives approximately 0.669762 and 0.330238.
+
+00:02:44.658 --> 00:02:51.998
+For numerical stability, subtract the largest score before exponentiating;
+
+00:02:51.998 --> 00:02:57.057
+this leaves the normalized probabilities unchanged.
+
+00:02:57.407 --> 00:02:59.538
+Take scalar values 2 and 10.
+
+00:02:59.538 --> 00:03:02.964
+Their weighted sum is approximately 4.641908.
+
+00:03:02.964 --> 00:03:05.628
+Calculations use unrounded weights.
+
+00:03:05.628 --> 00:03:11.261
+This is a mixture, not a hard retrieval of only the highest-scoring value.
+
+00:03:11.261 --> 00:03:16.438
+For a sequence with n query positions, the attention map has n rows;
+
+00:03:16.438 --> 00:03:18.341
+each valid row sums to 1.
+
+00:03:18.341 --> 00:03:24.507
+Key and value dimensions can differ, provided the matrix products are compatible.
+
+00:03:24.507 --> 00:03:29.227
+The page lets you modify the query and inspect scores, weights
+
+00:03:29.227 --> 00:03:31.967
+and the resulting output separately.
+
+00:03:32.767 --> 00:03:35.894
+Causal self-attention must exclude future keys.
+
+00:03:35.894 --> 00:03:41.614
+Add a mask that assigns negative infinity to forbidden scores before applying softmax.
+
+00:03:41.614 --> 00:03:43.477
+Their exponentials become 0.
+
+00:03:43.477 --> 00:03:48.200
+With our two-value example, if the query belongs to the first position,
+
+00:03:48.200 --> 00:03:50.196
+only the first key is allowed.
+
+00:03:50.196 --> 00:03:52.923
+Its weight becomes 1 and the output is 2.
+
+00:03:52.923 --> 00:03:55.850
+Each row must retain at least one valid key;
+
+00:03:55.850 --> 00:03:58.710
+masking every key requires special handling
+
+00:03:58.710 --> 00:04:03.367
+rather than treating undefined normalization as a useful distribution.
+
+00:04:03.717 --> 00:04:08.930
+With two equal finite allowed scores, softmax gives 0.5 to each key,
+
+00:04:08.930 --> 00:04:11.460
+and values 2 and 10 average to 6.
+
+00:04:11.460 --> 00:04:17.362
+Padding masks separately exclude positions introduced only to batch sequences
+
+00:04:17.362 --> 00:04:18.819
+of unequal lengths.
+
+00:04:18.819 --> 00:04:24.722
+Do not normalize first and then zero forbidden weights without renormalizing:
+
+00:04:24.722 --> 00:04:28.785
+the remaining row would generally no longer sum to 1.
+
+00:04:28.785 --> 00:04:33.614
+Also distinguish masking from assigning a low but finite score.
+
+00:04:33.614 --> 00:04:39.517
+The latter can leave a small, nonzero contribution from a forbidden position.
+
+00:04:39.867 --> 00:04:43.789
+Cross-attention uses queries from one representation sequence
+
+00:04:43.789 --> 00:04:48.997
+and keys and values from another, such as decoder states querying encoder states.
+
+00:04:48.997 --> 00:04:53.177
+The score map can be rectangular: target length by source length.
+
+00:04:53.177 --> 00:04:56.713
+The lecture's alignment and pronoun examples illustrate
+
+00:04:56.713 --> 00:04:59.092
+context-dependent information mixing,
+
+00:04:59.092 --> 00:05:03.593
+not proof that attention weights are a complete linguistic explanation
+
+00:05:03.593 --> 00:05:05.137
+or a causal attribution.
+
+00:05:05.137 --> 00:05:10.602
+To debug an implementation, verify query and key axes, masking direction and row sums
+
+00:05:10.602 --> 00:05:14.267
+before examining whether a visualization looks intuitive.
+
+00:05:15.067 --> 00:05:20.861
+Multi-head attention learns separate query, key and value projections for several heads.
+
+00:05:20.861 --> 00:05:23.759
+Each head computes its own attention output.
+
+00:05:23.759 --> 00:05:29.290
+Concatenate the head outputs and apply an output projection back to the model width.
+
+00:05:29.290 --> 00:05:32.780
+Different heads can represent different interactions,
+
+00:05:32.780 --> 00:05:37.718
+but they are not guaranteed to correspond to simple named linguistic roles.
+
+00:05:37.718 --> 00:05:43.249
+The positionwise feedforward network then transforms each position's feature vector,
+
+00:05:43.249 --> 00:05:47.990
+usually expanding and contracting its internal width with a nonlinearity
+
+00:05:47.990 --> 00:05:49.307
+between projections.
+
+00:05:49.657 --> 00:05:55.748
+For a concrete shape example, use 3 token positions, model width 4 and 2 heads,
+
+00:05:55.748 --> 00:05:58.215
+each with key and value width 2.
+
+00:05:58.215 --> 00:06:02.378
+Each head has a 3x3 score map and a 3x2 value mixture.
+
+00:06:02.378 --> 00:06:09.163
+Concatenation produces a 3x4 representation, followed by a compatible output projection.
+
+00:06:09.163 --> 00:06:14.020
+Adding a residual requires matching the original feature width.
+
+00:06:14.020 --> 00:06:19.340
+This small example makes clear that a head count is not a token count
+
+00:06:19.340 --> 00:06:24.737
+and the attention map's axes are positions, not embedding coordinates.
+
+00:06:25.087 --> 00:06:30.388
+Compared with recurrent state updates, attention provides direct interactions
+
+00:06:30.388 --> 00:06:32.660
+between distant allowed positions
+
+00:06:32.660 --> 00:06:36.928
+and easier parallel computation over known training positions.
+
+00:06:36.928 --> 00:06:41.059
+Standard full attention also constructs a quadratic-size map
+
+00:06:41.059 --> 00:06:44.225
+and uses quadratic sequence-length score work.
+
+00:06:44.225 --> 00:06:48.907
+Autoregressive inference remains sequential across generated tokens,
+
+00:06:48.907 --> 00:06:53.726
+although cached keys and values can avoid recomputing old projections.
+
+00:06:53.726 --> 00:06:57.650
+The lecture's model-family catalog and market-style chart
+
+00:06:57.650 --> 00:07:01.987
+are historical illustrations, not current limits or guarantees.
+
+00:07:01.987 --> 00:07:04.809
+Applications include language and vision,
+
+00:07:04.809 --> 00:07:08.527
+with architecture and evaluation tailored to the data.
+
+00:07:09.300 --> 00:07:11.094
+Pause for the final check.
+
+00:07:11.094 --> 00:07:20.405
+In a correctly masked causal attention layer, can changing the value at a future position affect the first position's attention output?
+
+00:07:20.405 --> 00:07:24.406
+What property of the weight matrix guarantees your answer?
+
+00:07:24.406 --> 00:07:32.614
+Then explain how the answer changes for an encoder's unrestricted self-attention or a decoder's source cross-attention.
+
+00:07:32.614 --> 00:07:41.580
+Do not describe all three simply as looking at the sentence; specify the origin of the query vectors and key vectors in each case.
+
+00:07:42.130 --> 00:07:46.811
+A correctly masked causal first row gives future keys 0 weight,
+
+00:07:46.811 --> 00:07:50.823
+so changing a future value cannot affect that mixture.
+
+00:07:50.823 --> 00:07:55.430
+An encoder can normally combine all unpadded source positions.
+
+00:07:55.430 --> 00:08:01.522
+Cross-attention normally lets decoder queries access the available encoder source,
+
+00:08:01.522 --> 00:08:03.528
+subject to its source mask.
+
+00:08:03.528 --> 00:08:08.134
+Your exercise is to implement one small attention calculation,
+
+00:08:08.134 --> 00:08:11.255
+assert the row sums and forbidden weights,
+
+00:08:11.255 --> 00:08:16.010
+and then deliberately reverse a mask to see how a numerical test
+
+00:08:16.010 --> 00:08:18.610
+detects future-information leakage.
+
+00:08:18.960 --> 00:08:21.930
+The 3 lectures now form a continuous path.
+
+00:08:21.930 --> 00:08:27.092
+Feedforward networks learn representations and use graph-based gradients.
+
+00:08:27.092 --> 00:08:31.194
+Convolution shares local filters across spatial positions.
+
+00:08:31.194 --> 00:08:36.285
+Recurrent networks share state updates across time, gates manage memory,
+
+00:08:36.285 --> 00:08:41.730
+and Transformers combine attention with positional and feedforward structure.
+
+00:08:41.730 --> 00:08:45.973
+Use the complete notes, executable labs and worked exercises
+
+00:08:45.973 --> 00:08:48.377
+to reconstruct these computations.
+
+00:08:48.377 --> 00:08:54.105
+Architectural names are useful only when you can explain the values, dependencies
+
+00:08:54.105 --> 00:08:58.560
+and training objective that the architecture actually computes.
+

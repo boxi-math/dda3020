@@ -1,0 +1,263 @@
+WEBVTT
+
+00:00:00.300 --> 00:00:02.663
+Training starts by specifying a loss.
+
+00:00:02.663 --> 00:00:11.989
+Follow the lecture's scalar example: a weighted input plus bias goes through sigmoid, then we measure half the squared difference from the target.
+
+00:00:11.989 --> 00:00:14.927
+We use squared error here to match the slides.
+
+00:00:14.927 --> 00:00:20.484
+Classification networks often use cross entropy instead, and its gradient is different.
+
+00:00:20.484 --> 00:00:24.189
+Always derive from the objective actually being optimized.
+
+00:00:24.189 --> 00:00:28.660
+A formula memorized for another loss can give the wrong training rule.
+
+00:00:29.010 --> 00:00:33.036
+Take input 2, weight 0.5, bias 0 and target 1.
+
+00:00:33.036 --> 00:00:41.787
+The weighted sum is 1, sigmoid gives approximately 0.731059, and the loss is approximately 0.036165.
+
+00:00:41.787 --> 00:00:47.650
+Store the preactivation and the prediction during the forward pass.
+
+00:00:47.650 --> 00:00:58.152
+A computational graph represents each input and intermediate quantity as a node, with edges showing direct dependencies.
+
+00:00:58.152 --> 00:01:02.090
+The graph makes reuse and branching explicit.
+
+00:01:02.440 --> 00:01:07.905
+We could expand the loss into a long expression and differentiate it symbolically.
+
+00:01:07.905 --> 00:01:11.170
+Backpropagation takes a more structured approach.
+
+00:01:11.170 --> 00:01:17.501
+Each node knows its local derivative, and we combine those local derivatives by the chain rule.
+
+00:01:17.501 --> 00:01:25.431
+Multiplication depends on both factors, addition passes sensitivity to both inputs, and sigmoid uses its cached output.
+
+00:01:25.431 --> 00:01:31.628
+This method applies to large compositions without writing an enormous closed-form derivative.
+
+00:01:31.628 --> 00:01:36.160
+The useful product is an efficient numerical derivative computation.
+
+00:01:36.933 --> 00:01:39.276
+Start at the loss and move backward.
+
+00:01:39.276 --> 00:01:45.782
+Differentiating half the squared error with respect to the prediction gives prediction minus target.
+
+00:01:45.782 --> 00:01:51.508
+The sigmoid derivative with respect to its input is prediction times 1 minus prediction.
+
+00:01:51.508 --> 00:01:57.233
+Therefore the loss sensitivity at the preactivation is the product of these two factors.
+
+00:01:57.233 --> 00:02:01.918
+This is an application of the chain rule, not a new learning assumption.
+
+00:02:01.918 --> 00:02:07.773
+At each step, write down which output is being differentiated with respect to which input.
+
+00:02:08.123 --> 00:02:12.061
+The preactivation is weight times input plus bias.
+
+00:02:12.061 --> 00:02:16.865
+Its derivative with respect to the weight is the input value.
+
+00:02:16.865 --> 00:02:20.409
+Its derivative with respect to the bias is 1.
+
+00:02:20.409 --> 00:02:27.734
+Consequently, the weight gradient has one extra input factor compared with the bias gradient.
+
+00:02:27.734 --> 00:02:33.404
+For our example the gradients are approximately -0.105754 and -0.052877.
+
+00:02:33.404 --> 00:02:41.043
+Their negative signs indicate that small increases in these parameters decrease the loss locally.
+
+00:02:41.393 --> 00:02:44.287
+An optimizer now uses these gradients.
+
+00:02:44.287 --> 00:02:50.759
+If we update only the weight with learning rate 1, it becomes approximately 0.605754.
+
+00:02:50.759 --> 00:02:55.555
+With the bias still 0, the next loss is approximately 0.026320.
+
+00:02:55.555 --> 00:03:02.713
+Updating both parameters would produce a different result, so state the convention explicitly.
+
+00:03:02.713 --> 00:03:08.195
+Backpropagation computes gradients; gradient descent changes parameters.
+
+00:03:08.195 --> 00:03:16.113
+A large learning rate can overshoot, and a negative gradient does not justify an arbitrarily large move.
+
+00:03:16.900 --> 00:03:19.711
+A graph is not always a single chain.
+
+00:03:19.711 --> 00:03:29.508
+If a variable affects the final result through several outgoing paths, its total gradient is the sum of those path contributions.
+
+00:03:29.508 --> 00:03:35.053
+The regularized loss on slide 31 has a data-loss path and a penalty path.
+
+00:03:35.053 --> 00:03:43.787
+With penalty 0.5 times the squared weight and coefficient lambda, add lambda times the weight to the data gradient.
+
+00:03:43.787 --> 00:03:48.420
+At weight 0.5 and lambda 0.1, the extra contribution is 0.05.
+
+00:03:48.770 --> 00:03:53.471
+The multivariate example in the lecture makes the same principle explicit.
+
+00:03:53.471 --> 00:04:00.713
+The final function is the second hidden quantity plus the exponential of the product of the two hidden quantities.
+
+00:04:00.713 --> 00:04:06.176
+The first hidden quantity is cosine of the input, and the second is the input squared.
+
+00:04:06.176 --> 00:04:10.750
+The original input influences the result through both hidden quantities.
+
+00:04:10.750 --> 00:04:20.850
+Differentiate the final function with respect to each hidden quantity separately, then multiply by each hidden quantity's derivative with respect to the input.
+
+00:04:21.200 --> 00:04:29.460
+The first path contributes the exponential of their product, multiplied by the second hidden quantity and minus sine of the input.
+
+00:04:29.460 --> 00:04:36.766
+The second path contributes 1 plus the first hidden quantity times that exponential, multiplied by twice the input.
+
+00:04:36.766 --> 00:04:37.656
+Add the paths.
+
+00:04:37.656 --> 00:04:43.437
+In code, initialize intermediate gradient accumulators to 0 and add incoming contributions.
+
+00:04:43.437 --> 00:04:49.664
+Replacing an earlier gradient contribution instead of adding the new contribution is a common bug.
+
+00:04:49.664 --> 00:04:53.920
+The same rule handles a shared weight used many times in a network.
+
+00:04:54.700 --> 00:05:01.203
+For a multilayer network, compute each layer's preactivation and activation in forward order.
+
+00:05:01.203 --> 00:05:13.578
+At a hidden layer, collect the sensitivity from all downstream units using the transpose of the next weight matrix, then multiply elementwise by the local activation derivative.
+
+00:05:13.578 --> 00:05:17.423
+The lecture writes this as sums over connected neurons.
+
+00:05:17.423 --> 00:05:22.317
+The matrix form is the same computation with dimensions made explicit.
+
+00:05:22.317 --> 00:05:27.980
+An output sensitivity must be derived from the chosen output activation and loss.
+
+00:05:28.330 --> 00:05:39.875
+The weight gradient of a dense layer is an outer product: the current layer's preactivation sensitivity multiplied by the previous layer's activation transpose.
+
+00:05:39.875 --> 00:05:43.122
+The bias gradient is the current sensitivity.
+
+00:05:43.122 --> 00:05:49.111
+For a minibatch, sum or average examples consistently with how the loss is defined.
+
+00:05:49.111 --> 00:05:54.594
+The graph on slide 32 combines a prediction loss with weight regularization.
+
+00:05:54.594 --> 00:06:02.098
+Read it operation by operation: matrix multiplication, activation, output projection, loss, and penalty.
+
+00:06:02.098 --> 00:06:05.850
+Branches must join by addition in the backward pass.
+
+00:06:06.200 --> 00:06:10.637
+The general algorithm orders nodes so parents come before children.
+
+00:06:10.637 --> 00:06:13.749
+Compute their values in this topological order.
+
+00:06:13.749 --> 00:06:22.356
+Seed the final scalar output's sensitivity with 1, then visit nodes in reverse order and propagate contributions to their parents.
+
+00:06:22.356 --> 00:06:28.117
+Compute gradients using the parameters from the same forward pass before updating them.
+
+00:06:28.117 --> 00:06:34.142
+Updating an early weight too soon can corrupt gradients that still depend on its old value.
+
+00:06:34.142 --> 00:06:39.240
+This reverse-mode process is what automatic differentiation systems automate.
+
+00:06:40.034 --> 00:06:41.273
+Pause and predict.
+
+00:06:41.273 --> 00:06:46.920
+Keep the weight, bias, target and sigmoid objective, but set the input value to 0.
+
+00:06:46.920 --> 00:06:49.399
+What happens to the weight gradient?
+
+00:06:49.399 --> 00:06:51.947
+Must the bias gradient also become 0?
+
+00:06:51.947 --> 00:06:56.905
+Then consider a graph where the same variable feeds two multiplications.
+
+00:06:56.905 --> 00:07:03.103
+Should its backward contributions be added or averaged merely because there are two paths?
+
+00:07:03.103 --> 00:07:06.064
+Draw both paths before checking the answer.
+
+00:07:06.064 --> 00:07:10.954
+Graph structure, rather than a slogan, should determine your reasoning.
+
+00:07:11.504 --> 00:07:17.247
+The weight gradient is 0 because changing the weight cannot change weight times a 0 input.
+
+00:07:17.247 --> 00:07:22.097
+The bias still shifts the preactivation, so its gradient can remain nonzero.
+
+00:07:22.097 --> 00:07:27.585
+Contributions from multiple computational paths are added, not automatically averaged.
+
+00:07:27.585 --> 00:07:31.733
+Averaging is a separate choice in the definition of a batch loss.
+
+00:07:31.733 --> 00:07:44.624
+For practice, check our two analytic gradients using a central finite difference: perturb one parameter slightly up and down, evaluate the loss, and divide the loss difference by twice the perturbation.
+
+00:07:44.974 --> 00:07:47.009
+Three rules summarize the part.
+
+00:07:47.009 --> 00:07:50.817
+Cache the intermediate values needed by local derivatives.
+
+00:07:50.817 --> 00:07:55.807
+Multiply derivatives along each path and add contributions where paths meet.
+
+00:07:55.807 --> 00:07:59.419
+Apply parameter updates after the gradient computation.
+
+00:07:59.419 --> 00:08:06.378
+Your exercise is to add the squared-weight penalty and verify its gradient numerically for several inputs.
+
+00:08:06.378 --> 00:08:18.854
+In the final part, we will apply these ideas to a small multilayer network and examine why deeper models can help, how much computation they cost, and why images motivate shared connections.
+

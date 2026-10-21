@@ -1,0 +1,257 @@
+WEBVTT
+
+00:00:00.300 --> 00:00:06.078
+Training a recurrent network applies backpropagation to its unrolled computational graph.
+
+00:00:06.078 --> 00:00:11.142
+Each hidden state influences the output at its own step and also later states.
+
+00:00:11.142 --> 00:00:20.620
+Therefore its sensitivity combines the direct contribution from its local prediction loss with the contribution arriving backward from the future.
+
+00:00:20.620 --> 00:00:27.372
+Multiply this combined sensitivity by the tanh derivative to obtain the local preactivation sensitivity.
+
+00:00:27.372 --> 00:00:33.020
+This is the same multiply-along-paths and add-at-branches rule introduced in Lecture 9.
+
+00:00:33.370 --> 00:00:41.187
+For each time step, form an outer product with the previous hidden state to contribute to the recurrent-weight gradient.
+
+00:00:41.187 --> 00:00:45.812
+Form another with the input to contribute to the input-weight gradient.
+
+00:00:45.812 --> 00:00:50.242
+Accumulate those contributions over all uses of the shared matrices.
+
+00:00:50.242 --> 00:00:55.258
+The output-weight gradient similarly sums contributions from the step losses.
+
+00:00:55.258 --> 00:01:00.600
+If the objective is an average over time, include that normalization consistently.
+
+00:01:00.600 --> 00:01:07.570
+The training lab checks these derivatives against finite differences before using them in gradient descent.
+
+00:01:07.920 --> 00:01:17.367
+Full backpropagation through time retains or reconstructs the intermediate values across the sequence, which can be expensive for long inputs.
+
+00:01:17.367 --> 00:01:20.028
+Truncated BPTT processes shorter chunks.
+
+00:01:20.028 --> 00:01:26.747
+A hidden-state value may be carried into the next chunk while its older gradient history is detached.
+
+00:01:26.747 --> 00:01:33.998
+This preserves forward information but restricts which earlier computations receive credit from a later loss.
+
+00:01:33.998 --> 00:01:38.322
+Resetting state and detaching its graph are different operations.
+
+00:01:38.322 --> 00:01:45.640
+The lecture's diagrams emphasize this distinction by carrying states forward while limiting the backward span.
+
+00:01:46.433 --> 00:01:52.040
+A recurrent gradient can contain a long product of local Jacobians.
+
+00:01:52.040 --> 00:01:55.052
+Products can shrink or grow rapidly.
+
+00:01:55.052 --> 00:02:01.077
+For intuition, 10 repeated scalar factors of 0.5 produce about 0.000977,
+
+00:02:01.077 --> 00:02:04.173
+whereas 10 factors of 2 produce 1024.
+
+00:02:04.173 --> 00:02:11.956
+Real networks involve matrices and activation derivatives, so their behavior is more complex.
+
+00:02:11.956 --> 00:02:15.386
+This calculation is only an illustration.
+
+00:02:15.386 --> 00:02:21.913
+Real gradient behavior depends on all the matrices and activation derivatives.
+
+00:02:22.263 --> 00:02:25.639
+Exploding gradients can cause unstable updates.
+
+00:02:25.639 --> 00:02:34.186
+Global norm clipping rescales a gradient when its norm exceeds a chosen threshold, leaving smaller gradients unchanged.
+
+00:02:34.186 --> 00:02:38.711
+For example, a gradient vector with entries 3 and 4 has norm 5.
+
+00:02:38.711 --> 00:02:41.871
+A threshold of 2 rescales it to 1.2 and 1.6.
+
+00:02:41.871 --> 00:02:47.257
+Coordinate-wise clipping is another convention and gives different results.
+
+00:02:47.257 --> 00:02:49.053
+State which rule is used.
+
+00:02:49.053 --> 00:02:54.583
+Our training lab exposes the norm threshold and applies one global rescaling.
+
+00:02:54.933 --> 00:02:59.959
+Vanishing gradients make distant earlier events receive very little training signal.
+
+00:02:59.959 --> 00:03:04.924
+Capping large gradients does not restore a derivative that has already become tiny.
+
+00:03:04.924 --> 00:03:08.633
+The slide's combined discussion should therefore be qualified:
+
+00:03:08.633 --> 00:03:10.787
+clipping mainly mitigates explosion.
+
+00:03:10.787 --> 00:03:15.812
+Gating and additive connections can improve the training signal over long distances,
+
+00:03:15.812 --> 00:03:18.205
+but no method guarantees perfect recall.
+
+00:03:18.205 --> 00:03:21.794
+RNNs also retain a sequential state dependency at inference.
+
+00:03:21.794 --> 00:03:24.965
+These limitations motivate both gated recurrent cells
+
+00:03:24.965 --> 00:03:28.853
+and the attention architecture we will examine in the final part.
+
+00:03:29.633 --> 00:03:35.412
+An LSTM maintains a cell state and a hidden state, rather than only one hidden vector.
+
+00:03:35.412 --> 00:03:45.692
+Concatenate the previous hidden state and current input, then apply learned affine projections to compute input, forget and output gates through sigmoid.
+
+00:03:45.692 --> 00:03:49.858
+A separate projection and tanh compute candidate cell content.
+
+00:03:49.858 --> 00:03:55.031
+These operations act on vectors; products in the cell update are elementwise.
+
+00:03:55.031 --> 00:04:02.153
+The slides sometimes call the candidate g a gate, but unlike the sigmoid gates its values can be negative.
+
+00:04:02.503 --> 00:04:07.239
+The new cell state combines retained old content and newly written content.
+
+00:04:07.239 --> 00:04:12.606
+Multiply the old cell by the forget gate, and add the input gate times the candidate.
+
+00:04:12.606 --> 00:04:17.405
+The output gate multiplies tanh of the new cell to produce the hidden state.
+
+00:04:17.405 --> 00:04:25.297
+A forget gate near 1 can preserve the direct cell path more readily than repeated multiplication through a tanh state update.
+
+00:04:25.297 --> 00:04:34.263
+The direct path derivative includes the forget factor, while the complete derivative also includes dependencies through the gate computations.
+
+00:04:34.613 --> 00:04:44.602
+Calculate one component with old cell 1, forget gate 0.8, input gate 0.25, candidate 0.4 and output gate 0.5.
+
+00:04:44.602 --> 00:04:52.117
+The retained content is 0.8 and the written content is 0.1, giving cell state 0.9.
+
+00:04:52.117 --> 00:04:57.982
+The hidden state is half of tanh of 0.9, approximately 0.358149.
+
+00:04:57.982 --> 00:05:01.007
+Try the interactive gate sliders.
+
+00:05:01.007 --> 00:05:13.653
+The result illustrates information flow; the gates in a trained LSTM are computed from learned projections, not manually chosen constants.
+
+00:05:14.433 --> 00:05:18.530
+A GRU uses gating without a separate LSTM-style cell vector.
+
+00:05:18.530 --> 00:05:28.841
+An update gate interpolates between the old state and a candidate, while a reset gate controls how the previous state enters the candidate calculation.
+
+00:05:28.841 --> 00:05:34.576
+We use the convention where update value z means the fraction of old state retained.
+
+00:05:34.576 --> 00:05:42.292
+Some presentations reverse this convention, and implementations also differ in where reset multiplication occurs.
+
+00:05:42.292 --> 00:05:49.393
+Always read the equations rather than transferring a gate's informal name between incompatible formulas.
+
+00:05:49.743 --> 00:05:57.469
+For our explicit convention, an old state of 0.6, retention gate 0.75 and candidate -0.2 gives 0.4.
+
+00:05:57.469 --> 00:06:03.323
+Most of the old state is retained, with one quarter of the candidate added.
+
+00:06:03.323 --> 00:06:15.731
+A GRU commonly uses three affine projections compared with four for a standard LSTM, so it usually has fewer parameters at the same widths and bias convention.
+
+00:06:15.731 --> 00:06:23.223
+It is still a trainable recurrent architecture, not a universal fix for every long-context task.
+
+00:06:23.573 --> 00:06:26.773
+The optional slides also stack recurrent layers.
+
+00:06:26.773 --> 00:06:35.773
+At each time step, the hidden output of a lower layer becomes input to the next layer; within each layer, state also flows across time.
+
+00:06:35.773 --> 00:06:37.707
+Keep these two axes separate.
+
+00:06:37.707 --> 00:06:46.707
+A bidirectional extension uses both temporal directions and cannot use unrestricted future context in a strictly causal streaming task.
+
+00:06:46.707 --> 00:06:54.507
+Greater depth does not guarantee improvement, and example depth counts in an older deck are not architectural limits.
+
+00:06:54.507 --> 00:06:59.173
+Evaluate the task, data, optimization and computational cost together.
+
+00:06:59.966 --> 00:07:05.935
+Pause and predict an idealized LSTM component with forget gate 1 and input gate 0.
+
+00:07:05.935 --> 00:07:07.901
+What is its new cell state?
+
+00:07:07.901 --> 00:07:11.104
+Must the hidden state equal that cell state?
+
+00:07:11.104 --> 00:07:19.329
+Then explain whether a forget gate near 1 guarantees that every gradient in a full recurrent model remains large.
+
+00:07:19.329 --> 00:07:27.846
+Distinguish the direct additive cell path from all the other dependencies in the computation graph before you answer.
+
+00:07:28.396 --> 00:07:35.106
+The new cell equals the old cell because it is entirely retained and no candidate content is written.
+
+00:07:35.106 --> 00:07:41.351
+The hidden state still applies tanh and an output gate, so it generally differs from the cell.
+
+00:07:41.351 --> 00:07:49.655
+Gates near 1 can improve a particular route for information and gradients, but do not guarantee healthy gradients everywhere.
+
+00:07:49.655 --> 00:07:58.956
+Your exercise is to compute both states for several slider settings, then derive how the cell changes when only its input gate is perturbed.
+
+00:07:59.306 --> 00:08:01.809
+Three conclusions connect this part.
+
+00:08:01.809 --> 00:08:06.190
+BPTT accumulates gradients through shared parameters over time.
+
+00:08:06.190 --> 00:08:13.003
+Gradient clipping and gated paths address different failure mechanisms and should not be confused.
+
+00:08:13.003 --> 00:08:19.747
+LSTM and GRU gates control information flow, while stacked models add a separate depth dimension.
+
+00:08:19.747 --> 00:08:27.604
+Next, attention will compare sequence positions directly rather than relying only on one recurrent state pathway.
+
+00:08:27.604 --> 00:08:34.626
+We will calculate its weights, apply causal masking and place it inside a complete Transformer block.
+

@@ -1,0 +1,314 @@
+WEBVTT
+
+00:00:00.300 --> 00:00:03.027
+Welcome to Lecture 9 of Machine Learning.
+
+00:00:03.027 --> 00:00:08.747
+Our question is how to learn useful features rather than choose every feature by hand.
+
+00:00:08.747 --> 00:00:14.067
+In logistic regression, we apply a sigmoid to a weighted sum of an input vector.
+
+00:00:14.067 --> 00:00:19.587
+In a support vector machine, we choose a separating boundary, often using a kernel.
+
+00:00:19.587 --> 00:00:24.110
+Both approaches depend on how the original examples are represented.
+
+00:00:24.110 --> 00:00:28.300
+A poor representation can make even a good classifier struggle.
+
+00:00:28.650 --> 00:00:31.253
+Imagine classifying handwritten digits.
+
+00:00:31.253 --> 00:00:34.858
+Raw pixels tell us brightness at individual positions.
+
+00:00:34.858 --> 00:00:42.000
+Features such as strokes and loops would be more directly useful, but designing them manually is difficult.
+
+00:00:42.000 --> 00:00:49.543
+A neural network learns intermediate quantities from the pixels, then uses those quantities to predict the label.
+
+00:00:49.543 --> 00:00:53.414
+We still specify the objective and optimization procedure.
+
+00:00:53.414 --> 00:01:00.690
+What changes is that some of the feature transformation becomes trainable along with the final decision rule.
+
+00:01:01.040 --> 00:01:02.658
+This lecture has 3 parts.
+
+00:01:02.658 --> 00:01:05.959
+First, we build neurons and hidden representations.
+
+00:01:05.959 --> 00:01:10.037
+Second, we derive backpropagation through computational graphs.
+
+00:01:10.037 --> 00:01:17.416
+Third, we connect multilayer learning, expressive power, and computational cost to the motivation for convolution.
+
+00:01:17.416 --> 00:01:27.902
+By the end, you should be able to calculate a forward pass, explain why nonlinear activations matter, and derive gradients rather than memorize an update formula.
+
+00:01:27.902 --> 00:01:34.440
+Keep the distinction between representing a function and successfully learning it in mind throughout.
+
+00:01:35.233 --> 00:01:42.802
+The lecture motivates an artificial neuron with biological neurons receiving excitatory and inhibitory signals.
+
+00:01:42.802 --> 00:01:46.892
+This is an analogy, not an accurate model of brain function.
+
+00:01:46.892 --> 00:01:54.665
+Mathematically, a unit multiplies each input by a weight, adds the products and a bias, and applies an activation.
+
+00:01:54.665 --> 00:02:00.392
+A positive weight can increase the preactivation; a negative weight can decrease it.
+
+00:02:00.392 --> 00:02:05.233
+The bias shifts the response independently of the current input vector.
+
+00:02:05.583 --> 00:02:08.385
+Calculate one unit with 2 inputs.
+
+00:02:08.385 --> 00:02:10.848
+The input values are 1 and 2.
+
+00:02:10.848 --> 00:02:14.754
+The weights are 0.5 and -1, and the bias is 1.
+
+00:02:14.754 --> 00:02:17.471
+Multiplication gives 0.5 and -2.
+
+00:02:17.471 --> 00:02:19.764
+Adding the bias gives -0.5.
+
+00:02:19.764 --> 00:02:23.500
+This is the preactivation, usually called z.
+
+00:02:23.500 --> 00:02:30.038
+Notice that a negative preactivation does not yet determine the final output.
+
+00:02:30.038 --> 00:02:34.623
+We must know which activation function the model uses.
+
+00:02:34.973 --> 00:02:38.152
+With a 0 threshold step, -0.5 produces 0.
+
+00:02:38.152 --> 00:02:45.903
+ReLU also returns 0 here, but for positive inputs it returns the input value rather than a binary 1.
+
+00:02:45.903 --> 00:02:48.772
+Sigmoid returns approximately 0.3775.
+
+00:02:48.772 --> 00:02:52.957
+These are different functions with different purposes.
+
+00:02:52.957 --> 00:03:01.639
+A perceptron commonly uses a hard decision; differentiable networks use activations suited to gradient training.
+
+00:03:01.639 --> 00:03:07.453
+The input layer supplies values; it need not perform this same computation.
+
+00:03:07.803 --> 00:03:14.080
+Slide 11 gives a hard-sign model and then approximates its derivative by one for an update.
+
+00:03:14.080 --> 00:03:18.977
+This is a surrogate rule, not the true derivative of the sign function.
+
+00:03:18.977 --> 00:03:22.632
+The classical perceptron instead updates on mistakes.
+
+00:03:22.632 --> 00:03:31.667
+With labels plus or minus 1, add learning rate times target times input to the weights, and learning rate times target to the bias.
+
+00:03:31.667 --> 00:03:35.943
+A smooth sigmoid model supports ordinary loss differentiation.
+
+00:03:35.943 --> 00:03:47.323
+Keep these training rules distinct: replacing an inconvenient derivative by 1 is an additional modeling choice, not a mathematical consequence of the hard threshold.
+
+00:03:48.100 --> 00:03:54.298
+The slides compare linear, ReLU, softplus, sigmoid, and hyperbolic tangent activations.
+
+00:03:54.298 --> 00:03:57.575
+Softplus smoothly approximates the ReLU shape.
+
+00:03:57.575 --> 00:04:04.058
+Sigmoid has outputs between 0 and 1, while hyperbolic tangent has outputs between -1 and 1.
+
+00:04:04.058 --> 00:04:09.900
+Saturated sigmoid units have small derivatives, which will matter during learning.
+
+00:04:09.900 --> 00:04:15.813
+ReLU is not differentiable exactly at 0; implementations select a convention there.
+
+00:04:15.813 --> 00:04:22.580
+A linear activation does not introduce the nonlinearity we need for richer decision boundaries.
+
+00:04:22.930 --> 00:04:25.933
+A perceptron can implement familiar logic.
+
+00:04:25.933 --> 00:04:30.508
+For binary inputs, threshold the sum minus 1.5 to implement AND.
+
+00:04:30.508 --> 00:04:32.796
+Only two 1s cross the threshold.
+
+00:04:32.796 --> 00:04:35.941
+Threshold the sum minus 0.5 to implement OR.
+
+00:04:35.941 --> 00:04:38.729
+For NOT, threshold 0.5 minus the input.
+
+00:04:38.729 --> 00:04:43.304
+We define the step to return 1 when its argument is nonnegative.
+
+00:04:43.304 --> 00:04:50.810
+None of these examples lands exactly on 0, so the boundary convention does not affect their truth tables.
+
+00:04:51.160 --> 00:04:53.244
+Now try exclusive OR, or XOR.
+
+00:04:53.244 --> 00:04:55.399
+Exactly one input should be 1.
+
+00:04:55.399 --> 00:05:03.803
+The positive points occupy opposite corners of the unit square, and the negative points occupy the other two corners.
+
+00:05:03.803 --> 00:05:06.102
+No straight line separates them.
+
+00:05:06.102 --> 00:05:10.484
+Therefore a single perceptron cannot represent this function.
+
+00:05:10.484 --> 00:05:22.480
+Read the slide's statement about simple Boolean gates with this restriction: perceptrons represent linearly separable Boolean functions, not all possible binary logic.
+
+00:05:23.267 --> 00:05:25.063
+Introduce 2 hidden units.
+
+00:05:25.063 --> 00:05:28.655
+The first computes OR and the second computes AND.
+
+00:05:28.655 --> 00:05:35.623
+Use the first hidden output with weight 1, the second with weight -1, and an output bias of -0.5.
+
+00:05:35.623 --> 00:05:40.579
+This reproduces the structure of the XOR construction in the lecture.
+
+00:05:40.579 --> 00:05:47.188
+We explicitly use binary step outputs because sign functions sometimes use -1 and 1 instead.
+
+00:05:47.188 --> 00:05:51.067
+Mixing these conventions would change the calculation.
+
+00:05:51.417 --> 00:05:53.005
+Trace the 4 inputs.
+
+00:05:53.005 --> 00:05:56.764
+0, 0 maps to hidden values 0, 0 and output 0.
+
+00:05:56.764 --> 00:06:00.440
+0, 1 and 1, 0 both map to 1, 0 and output 1.
+
+00:06:00.440 --> 00:06:03.030
+1, 1 maps to 1, 1 and output 0.
+
+00:06:03.030 --> 00:06:08.377
+In hidden coordinates, the final classes are linearly separable.
+
+00:06:08.377 --> 00:06:14.141
+A layer computes a function, so several layers compute a composition.
+
+00:06:14.141 --> 00:06:17.065
+This explains representation power.
+
+00:06:17.065 --> 00:06:27.257
+It does not prove that gradient descent can train hard step activations, whose derivatives are unhelpful for that purpose.
+
+00:06:27.607 --> 00:06:31.898
+For a 28 by 28 digit image, flattening gives 784 input values.
+
+00:06:31.898 --> 00:06:39.510
+A first-layer weight vector can be reshaped back into an image to inspect which pixel patterns it responds to.
+
+00:06:39.510 --> 00:06:42.625
+The slide illustrates a stroke-like detector.
+
+00:06:42.625 --> 00:06:50.029
+Hidden units need not acquire human-readable concepts, but their activations form a learned representation.
+
+00:06:50.029 --> 00:06:55.220
+The output layer combines that representation to distinguish digit classes.
+
+00:06:55.220 --> 00:07:03.247
+Later, convolution will preserve spatial neighborhoods instead of fully connecting every pixel to every hidden unit.
+
+00:07:03.597 --> 00:07:07.526
+The next slide also gives a ReLU construction.
+
+00:07:07.526 --> 00:07:10.345
+Let the sum of the 2 inputs be s.
+
+00:07:10.345 --> 00:07:14.445
+Define hidden values as ReLU(s) and ReLU(s - 1).
+
+00:07:14.445 --> 00:07:23.071
+The output ReLU of the first hidden value minus twice the second gives the exact 0-1 XOR truth table.
+
+00:07:23.071 --> 00:07:31.186
+The displayed slide adds an extra -0.5 output bias, giving positive scores of 0.5 instead of 1.
+
+00:07:31.186 --> 00:07:40.837
+Those scores separate the classes, but a decision threshold is needed if the requested outputs are binary labels.
+
+00:07:41.634 --> 00:07:47.520
+Pause the video and calculate the hidden values and final prediction for input 1, 1.
+
+00:07:47.520 --> 00:07:52.285
+Then explain the result in words without using the term 'black box'.
+
+00:07:52.285 --> 00:08:02.936
+As a second question, predict whether adding 10 linear layers, with no nonlinear activation anywhere, can make a straight-line classifier represent XOR.
+
+00:08:02.936 --> 00:08:05.880
+Write down your answers before continuing.
+
+00:08:05.880 --> 00:08:10.434
+The aim is to reason about the computation, not recall a diagram.
+
+00:08:10.984 --> 00:08:15.106
+Both hidden units activate on 1, 1: OR is 1 and AND is 1.
+
+00:08:15.106 --> 00:08:19.516
+Their contributions cancel, and the output threshold gives 0.
+
+00:08:19.516 --> 00:08:28.699
+Adding linear or affine layers without nonlinear activations still produces a single affine function, so it does not solve XOR.
+
+00:08:28.699 --> 00:08:34.266
+Multiplying matrices changes the coefficients but not the class of functions.
+
+00:08:34.266 --> 00:08:41.424
+We will return to this fact when discussing what depth contributes and what it does not contribute.
+
+00:08:41.774 --> 00:08:42.852
+Remember 3 ideas.
+
+00:08:42.852 --> 00:08:46.782
+A mathematical neuron applies an activation to a weighted sum.
+
+00:08:46.782 --> 00:08:52.868
+Hidden layers can transform a difficult representation into one a final classifier can separate.
+
+00:08:52.868 --> 00:08:58.066
+Representing a function is different from finding its parameters through training.
+
+00:08:58.066 --> 00:09:03.138
+For practice, write all 4 rows of the XOR construction and check each threshold.
+
+00:09:03.138 --> 00:09:10.174
+In the next part, we keep the prediction smooth and work backward through its computation to learn the weights.
+

@@ -1,0 +1,260 @@
+WEBVTT
+
+00:00:00.300 --> 00:00:04.833
+Pooling reduces spatial size by summarizing a region.
+
+00:00:04.833 --> 00:00:10.650
+In max pooling, each output is the largest value in its input patch.
+
+00:00:10.650 --> 00:00:14.071
+The slide uses 2x2 windows and stride 2.
+
+00:00:14.071 --> 00:00:18.775
+Its 4x4 input has first rows 1, 1, 2, 4 and 5, 6, 7, 8.
+
+00:00:18.775 --> 00:00:22.624
+The lower rows are 3, 2, 1, 0 and 1, 2, 3, 4.
+
+00:00:22.624 --> 00:00:29.980
+Split this into four non-overlapping patches and calculate each maximum independently.
+
+00:00:30.330 --> 00:00:41.068
+The upper-left patch gives 6, the upper-right gives 8, the lower-left gives 3, and the lower-right gives 4.
+
+00:00:41.068 --> 00:00:48.094
+Therefore the pooled output is the 2x2 matrix with rows 6, 8 and 3, 4.
+
+00:00:48.094 --> 00:00:56.022
+Pooling operates separately within every channel, preserving the channel count.
+
+00:00:56.022 --> 00:01:03.850
+A 224x224x64 volume becomes 112x112x64 under this 2x2, stride-2 configuration.
+
+00:01:04.200 --> 00:01:07.750
+Max pooling has no learned filter weights or biases.
+
+00:01:07.750 --> 00:01:16.146
+During backpropagation, sensitivity flows to an input that attained the maximum; ties require an implementation convention.
+
+00:01:16.146 --> 00:01:22.359
+Overlapping windows can contribute gradients to the same input and those contributions add.
+
+00:01:22.359 --> 00:01:30.619
+Pooling can improve robustness to small local shifts but does not make the entire network invariant to every translation.
+
+00:01:30.619 --> 00:01:36.558
+It discards spatial detail, which can be harmful for tasks requiring precise locations.
+
+00:01:36.558 --> 00:01:41.200
+Downsampling is a design tradeoff, not automatically an improvement.
+
+00:01:42.000 --> 00:01:52.320
+The lecture motivates pooling by observing that repeated convolution can either shrink a volume too slowly or remove useful detail too quickly.
+
+00:01:52.320 --> 00:01:56.722
+To reason about what a later unit sees, track two quantities.
+
+00:01:56.722 --> 00:02:02.423
+The receptive field is the span of original input positions that can affect it.
+
+00:02:02.423 --> 00:02:09.785
+The effective spacing is how far neighboring current features are apart in original-input coordinates.
+
+00:02:09.785 --> 00:02:12.960
+Both start at 1 for the original pixel grid.
+
+00:02:13.310 --> 00:02:23.386
+For a layer with filter width F and stride S, the new receptive-field width equals the old width plus F minus 1 times the old spacing.
+
+00:02:23.386 --> 00:02:28.198
+The new spacing equals the old spacing multiplied by the stride.
+
+00:02:28.198 --> 00:02:34.740
+Consider a 3-wide, stride-1 convolution: receptive field becomes 3 and spacing stays 1.
+
+00:02:34.740 --> 00:02:41.808
+Follow with a 2-wide, stride-2 pooling layer: receptive field becomes 4 and spacing becomes 2.
+
+00:02:41.808 --> 00:02:48.350
+The larger stride changes what the next layer's neighbors mean in original coordinates.
+
+00:02:48.700 --> 00:02:58.130
+Another 3-wide, stride-1 convolution now adds 4 original pixels to the receptive-field width, producing 8, while spacing stays 2.
+
+00:02:58.130 --> 00:03:03.101
+This is a theoretical dependency calculation for interior positions.
+
+00:03:03.101 --> 00:03:12.531
+It does not measure how strongly every pixel affects the output, and padding can make boundary regions include artificial values.
+
+00:03:12.531 --> 00:03:16.113
+The website exposes this recurrence step by step.
+
+00:03:16.113 --> 00:03:24.300
+Your exercise is to compare two 3-wide stride-1 convolutions without pooling: their receptive field is 5, not 6.
+
+00:03:25.100 --> 00:03:32.357
+A fully connected layer looks at the entire input volume rather than only a local window.
+
+00:03:32.357 --> 00:03:38.716
+Flattening arranges the width, height and channel values into a single vector.
+
+00:03:38.716 --> 00:03:42.548
+It does not learn weights or change the values.
+
+00:03:42.548 --> 00:03:50.946
+If the vector length is D and the dense layer has M outputs, there are D times M weights plus M biases.
+
+00:03:50.946 --> 00:03:56.980
+For the slide's 32x32x3 image and 10 outputs, that gives 30730 parameters.
+
+00:03:57.330 --> 00:04:07.705
+In an early CNN architecture, convolution and pooling first construct a representation, then a dense head uses all its entries to predict class scores.
+
+00:04:07.705 --> 00:04:10.247
+Those scores are often called logits.
+
+00:04:10.247 --> 00:04:19.523
+Softmax turns logits into a probability distribution, and a suitable cross-entropy loss compares that distribution with a target class.
+
+00:04:19.523 --> 00:04:23.646
+Softmax alone does not make the model correct or calibrated.
+
+00:04:23.646 --> 00:04:28.730
+The loss and training data still determine how the parameters are learned.
+
+00:04:29.080 --> 00:04:31.491
+A classifier is only one possible head.
+
+00:04:31.491 --> 00:04:34.582
+Detection requires localization as well as labels,
+
+00:04:34.582 --> 00:04:37.302
+segmentation requires a label at each pixel,
+
+00:04:37.302 --> 00:04:39.465
+and captioning produces a sequence.
+
+00:04:39.465 --> 00:04:46.636
+Some modern classifiers replace a large flattened dense head with global average pooling and a smaller linear layer.
+
+00:04:46.636 --> 00:04:51.335
+This is a useful extension rather than a requirement of the original slides.
+
+00:04:51.335 --> 00:04:55.785
+Whenever you change the head, recalculate both dimensions and parameters
+
+00:04:55.785 --> 00:04:59.680
+instead of assuming the backbone determines the complete model.
+
+00:05:00.467 --> 00:05:08.017
+Here is a new complete architecture that uses all the lecture's building blocks.
+
+00:05:08.017 --> 00:05:10.566
+Start with a 32x32x3 image.
+
+00:05:10.566 --> 00:05:18.116
+A 3x3 convolution with 8 filters, stride 1 and padding 1 preserves spatial size.
+
+00:05:18.116 --> 00:05:22.929
+Its parameter count is (3*3*3 + 1) * 8, giving 224.
+
+00:05:22.929 --> 00:05:25.289
+ReLU preserves the shape.
+
+00:05:25.289 --> 00:05:29.347
+2x2 pooling with stride 2 produces 16x16x8.
+
+00:05:29.697 --> 00:05:39.500
+A second 3x3 convolution has 16 filters and input depth 8, again using stride 1 and padding 1.
+
+00:05:39.500 --> 00:05:42.941
+It produces 16x16x16 activations.
+
+00:05:42.941 --> 00:05:47.113
+Its parameter count is 73 * 16, or 1168.
+
+00:05:47.113 --> 00:05:53.683
+After ReLU and another 2x2 stride-2 pool, the volume is 8x8x16.
+
+00:05:53.683 --> 00:06:01.817
+Flattening gives 1024 values, with no new parameters introduced by flattening.
+
+00:06:02.167 --> 00:06:05.840
+A 10-output dense head then has 10250 parameters.
+
+00:06:05.840 --> 00:06:11.312
+Adding the two convolution layers gives a total of 11642 learned numbers.
+
+00:06:11.312 --> 00:06:14.535
+Most are in the dense head in this example.
+
+00:06:14.535 --> 00:06:21.581
+This audit is deliberately explicit: list every tensor, then count each learned operator once.
+
+00:06:21.581 --> 00:06:25.029
+The checked implementation verifies the table.
+
+00:06:25.029 --> 00:06:36.647
+The lecture's further-reading slide points to the Stanford computer-vision course and frameworks such as PyTorch and TensorFlow for larger implementations.
+
+00:06:37.434 --> 00:06:40.373
+Pause for a final architecture question.
+
+00:06:40.373 --> 00:06:52.865
+In our complete CNN, replace flattening and the 1024-input dense head with global average pooling over each of the 16 final channels, followed by a 10-output dense layer.
+
+00:06:52.865 --> 00:06:55.216
+What changes in parameter count?
+
+00:06:55.216 --> 00:07:01.241
+Does the new head preserve all the location information from the 8x8 spatial grid?
+
+00:07:01.241 --> 00:07:07.634
+Separate the arithmetic question from the modeling tradeoff before checking the answer.
+
+00:07:08.184 --> 00:07:10.972
+Global averaging supplies 16 numbers,
+
+00:07:10.972 --> 00:07:15.645
+so the dense layer now has 16 times 10 weights plus 10 biases,
+
+00:07:15.645 --> 00:07:17.001
+or 170 parameters.
+
+00:07:17.001 --> 00:07:19.789
+The full network total becomes 1,562.
+
+00:07:19.789 --> 00:07:27.401
+The head has fewer coefficients but discards the detailed arrangement of the final spatial positions.
+
+00:07:27.401 --> 00:07:34.183
+This can be useful for classification and inappropriate for some location-sensitive tasks.
+
+00:07:34.183 --> 00:07:38.479
+Your exercise is to change the stride of one convolution,
+
+00:07:38.479 --> 00:07:42.397
+then recalculate the shape at every following stage,
+
+00:07:42.397 --> 00:07:45.864
+the flattened length and the parameter counts.
+
+00:07:46.214 --> 00:07:48.478
+The lecture connects three ideas.
+
+00:07:48.478 --> 00:07:52.458
+Local shared filters efficiently compute spatial features.
+
+00:07:52.458 --> 00:07:57.467
+Explicit shape and parameter calculations prevent architectural mistakes.
+
+00:07:57.467 --> 00:08:03.094
+Pooling and a task-appropriate prediction head turn those features into an output.
+
+00:08:03.094 --> 00:08:13.386
+You have followed the historical motivation, applications, convolution arithmetic, padding and stride, pooling, dense layers and an end-to-end design.
+
+00:08:13.386 --> 00:08:21.414
+Next we replace spatial neighborhoods with ordered sequences and examine recurrent state, gated memory and attention.
+
